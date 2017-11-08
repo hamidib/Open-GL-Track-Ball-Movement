@@ -192,11 +192,11 @@ public:
     activateUniforms(_light0, _light1, teapot.material);
     teapot.draw( );
     
-    int mbFlags = mouseButtonFlags( );
+    int mbFlags = mouseButtonFlags( ); //information from mouse (left mouse button by default, other two buttons are diff)
     std::tuple<int, int> mousePosition = mouseCurrentPosition( );
     std::tuple<int, int> prevMousePosition = mousePreviousPosition( );
      
-    if(mbFlags == MOUSE_BUTTON_LEFT){
+    if(mbFlags == MOUSE_BUTTON_LEFT){ //information code to see if mouse button is down example // mouse position is a tuple use get for 1st and 2nd item in tuple
       std::cerr << "Left mouse button is down" << std::endl;
       std::cerr << "Current mouse position: " << std::get<0>(mousePosition) << ", " << std::get<1>(mousePosition) << std::endl;
       std::cerr << "Previous mouse position: " << std::get<0>(prevMousePosition) << ", " << std::get<1>(prevMousePosition) << std::endl;
