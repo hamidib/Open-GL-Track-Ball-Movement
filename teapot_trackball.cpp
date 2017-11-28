@@ -24,6 +24,9 @@
 #include "Camera.h"
 #include "UtahTeapot.h"
 
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 void msglVersion(void){
   fprintf(stderr, "OpenGL Version Information:\n");
   fprintf(stderr, "\tVendor: %s\n", glGetString(GL_VENDOR));
@@ -198,8 +201,50 @@ public:
      
     if(mbFlags == MOUSE_BUTTON_LEFT){ //information code to see if mouse button is down example // mouse position is a tuple use get for 1st and 2nd item in tuple
       std::cerr << "Left mouse button is down" << std::endl;
+        //head - tail
+        glm::vec3 currentPosRay = glm::normalize(glm::vec3(std::get<0>(mousePosition)-300,std::get<1>(mousePosition)-300,mainCamera.eyePosition.z) - teapot.position);
+        glm::vec3 previousPosRay = glm::normalize(glm::vec3(std::get<0>(prevMousePosition)-300,std::get<1>(prevMousePosition)-300,mainCamera.eyePosition.z) - teapot.position);
+        //axis of rotation
+        glm::vec3 cuCcen = glm::normalize(cross(currentPosRay, previousPosRay));
+        //angle of rotation
+        float cDp = glm::acos(dot(currentPosRay, previousPosRay));
+        
+        glm::mat4 modelMatrix = glm::rotate(modelMatrix, cDp, cuCcen);
+        //teapot.position = modelMatrix * teapot.position;
+        
+        float x = cuCcen.x * sin(cDp / 2);
+        float y = cuCcen.y * sin(cDp / 2);
+        float z = cuCcen.z * sin(cDp / 2);
+        float w = cos(cDp / 2);
+        glm::quat myQuaternion2 = glm::quat(w, x, y, z);
+    //perspective and look at or unproject for z value
+        glm::vec3 EulerAngles(x, y, z);
+        glm::quat myQuaternion = glm::quat(EulerAngles);
+        
+        //winx = (((mousepos.x * 2 ) - windowsize.w )/ window.w ) * (2.0 * nearHalfWidth)
+        //float winy = -(((mousepos.y * 2 ) - windowsize.w )/ window.w) * (2.0 * nearHalfWidth)
+        //wincoords <mouse x, y 0,>
+        //vec4 invert vp
+        //vec3 unproject wind coord mvm, projct m, vp
+        
+        //haflwidthnear = maincamera.halfwidth(a)//a is aspect ratdio
+        //mat4 RotationMatrix = quaternion::toMat4(quaternion);
+        glm::mat4 rotationMatrix = toMat4(myQuaternion2);
+       //modelViewMatrix = glm::rotate(modelViewMatrix, cDp, cuCcen);
+       //glm::rotate(teapot.position, cDp, cuCcen);
+        
+       // teapot.position = myQuaternion2 * teapot.position;// * ScaleMatrix;
+        
+        //teapot.draw( );
+        //glm::mat4 ModelMatrix = TranslationMatrix * RotationMatrix * ScaleMatrix;
+        //myQuaternion = glm::gtx::quaternion::angleAxis(degrees(RotationAngle), RotationAxis);
+        //glm::quat myQuaternion = gtx::quaternion::angleAxis(cDp, cuCcen);
+        //glm::mat4 rotationMatrix = gtx::quaternion::toMat4(myQuaternion);
+        std::cerr << "Current Teapot position: " << glm::to_string(teapot.position) << std::endl;
+
       std::cerr << "Current mouse position: " << std::get<0>(mousePosition) << ", " << std::get<1>(mousePosition) << std::endl;
       std::cerr << "Previous mouse position: " << std::get<0>(prevMousePosition) << ", " << std::get<1>(prevMousePosition) << std::endl;
+        
     }else if(mbFlags == MOUSE_BUTTON_RIGHT){
       std::cerr << "Right mouse button is down" << std::endl;
       std::cerr << "Current mouse position: " << std::get<0>(mousePosition) << ", " << std::get<1>(mousePosition) << std::endl;

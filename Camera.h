@@ -79,7 +79,7 @@ public:
     glVertex3f(0.5, -0.5, 0.5);
     glEnd( );
   }
-
+//half height near, half width near
   float halfHeight( ){
     float fovy_rads = fovy * (M_PI / 180.0);
     float hh = tan(fovy_rads);
