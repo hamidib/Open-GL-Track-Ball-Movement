@@ -229,8 +229,8 @@ public:
         float pmousePosY = std::get<1>(prevMousePosition);
         
         float winx = (((mousePosX * 2 ) - windowsize_width )/ windowsize_width ) * (2.0 * mainCamera.halfWidth(1));
-        float winy = -(((mousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfWidth(1));
-        glm::vec4 wincoords(winx, winy, mainCamera.near, 0); // image plane coords then go to sphere coord
+        float winy = -(((mousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfHeight());
+        glm::vec4 wincoords = glm::vec4(winx, winy, mainCamera.near, 0); // image plane coords then go to sphere coord
         glm::mat4 lookAt;
         mainCamera.lookAtMatrix(lookAt);
         glm::vec4 cameraSpaceC = lookAt * wincoords; //Current Coords
@@ -239,9 +239,9 @@ public:
         std::cout <<"P: " <<to_string(cameraSpaceC) <<"Pend: "<< to_string(Pend) << std::endl;
         
         winx = (((pmousePosX * 2 ) - windowsize_width )/ windowsize_width ) * (2.0 * mainCamera.halfWidth(1));
-        winy = -(((pmousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfWidth(1));
-        glm::vec4 pwincoords(winx, winy, mainCamera.near, 0);
-        glm::vec4 cameraSpaceP = lookAt * wincoords; //Previous Coords
+        winy = -(((pmousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfHeight());
+        glm::vec4 pwincoords = glm::vec4(winx, winy, mainCamera.near, 0);
+        glm::vec4 cameraSpaceP = lookAt * pwincoords; //Previous Coords
         glm::vec3 Pstart = normalize(shoemake(pwincoords, 1));
         std::cout <<"P: " <<to_string(cameraSpaceP) <<"Pstart: "<< to_string(Pstart) << std::endl;
         std::cout <<"Winx: "<< winx <<" Winy: " << winy << std::endl;
@@ -251,19 +251,22 @@ public:
         //angle of rotation
         float sDe = dot(Pstart, Pend);//glm::acos(dot(Pstart, Pend));
         std::cout <<"Cross Prod: " << to_string(crossProd) << "Dot Prod: " << sDe << std::endl;
-        //glm::vec3 theta = (1/tan(crossProd/sDe));
+        float magnitude = sqrt(crossProd.x * crossProd.x + crossProd.y * crossProd.y + crossProd.z * crossProd.z);
+        float angle = (1.0f/(tan(magnitude/sDe)));
         
-        if(!isnan(crossProd.x))
+        //check when mouse hasn't moved
+        if(!isnan(crossProd.x) && !isnan(crossProd.y) && !isnan(crossProd.z))
         {
         //move to origin
-        teapot.position = teapot.position - mainCamera.eyePosition;
+        //teapot.position = teapot.position - mainCamera.eyePosition;
         // transform
-        glm::mat4 m = glm::rotate(sDe, crossProd);
+        modelViewMatrix = glm::rotate(modelViewMatrix, angle, crossProd);
+        //glm::mat4 m = glm::rotate(2.0f, crossProd);
         //modelViewMatrix = modelViewMatrix * m;
-        glm::vec4 tmp = m * glm::vec4(teapot.position, 1.0);
-        teapot.position = glm::vec3 (tmp.x, tmp.y, tmp.z);
+        //glm::vec4 tmp = m * glm::vec4(teapot.position, 1.0);
+        //teapot.position = glm::vec3 (tmp.x, tmp.y, tmp.z);
         // Move everything back
-        teapot.position = teapot.position + mainCamera.eyePosition;
+        //teapot.position = teapot.position + mainCamera.eyePosition;
         }
         //modelViewMatrix = glm::rotate(modelViewMatrix, sDe, crossProd);
         //glm::rotate(teapot.position, sDe, crossProd);
