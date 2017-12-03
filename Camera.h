@@ -16,6 +16,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <cmath>
+
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
@@ -79,10 +81,18 @@ public:
     glVertex3f(0.5, -0.5, 0.5);
     glEnd( );
   }
+    float rad2deg(float radians){
+        return radians * (180.0 / M_PI);
+    }
+    
+    float deg2rad(float degrees){
+        return degrees * (M_PI / 180.0);
+    }
+    
 //half height near, half width near
   float halfHeight( ){
-    float fovy_rads = fovy * (M_PI / 180.0);
-    float hh = tan(fovy_rads);
+      float fovy_rads = deg2rad(fovy);//fovy * (M_PI / 180.0);
+      float hh = tan(fovy_rads/2.0) * near;//tan(fovy_rads);
     return hh;
   }
 

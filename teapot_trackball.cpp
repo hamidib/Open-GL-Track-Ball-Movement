@@ -169,6 +169,24 @@ public:
     glUniform1f(uShininess, m->shininess);
   }
   
+    glm::vec3 shoemake(glm::vec4 wincoords, float teapotSize)
+    {
+        float xx = wincoords.x * wincoords.x;
+        float yy = wincoords.y * wincoords.y;
+        float rr = (teapotSize/2) * (teapotSize/2); //either or not /2
+        
+        if (xx + yy > rr)
+        {
+             std::cout <<"not on teapot" << std::endl;
+            return glm::vec3(wincoords.x, wincoords.y, sqrt(rr-(xx + yy)));
+        }else //( xx + yy <= rr)
+        {
+            std::cout <<"On teapot" << std::endl;
+            return glm::vec3((teapotSize/2)/(sqrt(xx+yy)) * glm::vec3(wincoords.x, wincoords.y, 0));
+        }
+    }
+ 
+    
   bool render( ){
     glm::vec4 _light0;
     glm::vec4 _light1;
@@ -201,45 +219,58 @@ public:
      
     if(mbFlags == MOUSE_BUTTON_LEFT){ //information code to see if mouse button is down example // mouse position is a tuple use get for 1st and 2nd item in tuple
       std::cerr << "Left mouse button is down" << std::endl;
-        //head - tail
-        glm::vec3 currentPosRay = glm::normalize(glm::vec3(std::get<0>(mousePosition)-300,std::get<1>(mousePosition)-300,mainCamera.eyePosition.z) - teapot.position);
-        glm::vec3 previousPosRay = glm::normalize(glm::vec3(std::get<0>(prevMousePosition)-300,std::get<1>(prevMousePosition)-300,mainCamera.eyePosition.z) - teapot.position);
+        
+        /////////////////////////////////////////
+        float windowsize_width = 600; //float(std::get<0>(w));
+        float windowsize_height = 600; //float(std::get<1>(w));
+        float mousePosX = std::get<0>(mousePosition);
+        float mousePosY = std::get<1>(mousePosition);
+        float pmousePosX = std::get<0>(prevMousePosition);
+        float pmousePosY = std::get<1>(prevMousePosition);
+        
+        float winx = (((mousePosX * 2 ) - windowsize_width )/ windowsize_width ) * (2.0 * mainCamera.halfWidth(1));
+        float winy = -(((mousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfWidth(1));
+        glm::vec4 wincoords(winx, winy, mainCamera.near, 0); // image plane coords then go to sphere coord
+        glm::mat4 lookAt;
+        mainCamera.lookAtMatrix(lookAt);
+        glm::vec4 cameraSpaceC = lookAt * wincoords; //Current Coords
+        glm::vec3 Pend = normalize(shoemake(wincoords, 1));
+        std::cout <<"Winx: "<< winx <<" Winy: " << winy << std::endl;
+        std::cout <<"P: " <<to_string(cameraSpaceC) <<"Pend: "<< to_string(Pend) << std::endl;
+        
+        winx = (((pmousePosX * 2 ) - windowsize_width )/ windowsize_width ) * (2.0 * mainCamera.halfWidth(1));
+        winy = -(((pmousePosY * 2 ) - windowsize_height )/ windowsize_height) * (2.0 * mainCamera.halfWidth(1));
+        glm::vec4 pwincoords(winx, winy, mainCamera.near, 0);
+        glm::vec4 cameraSpaceP = lookAt * wincoords; //Previous Coords
+        glm::vec3 Pstart = normalize(shoemake(pwincoords, 1));
+        std::cout <<"P: " <<to_string(cameraSpaceP) <<"Pstart: "<< to_string(Pstart) << std::endl;
+        std::cout <<"Winx: "<< winx <<" Winy: " << winy << std::endl;
+        
         //axis of rotation
-        glm::vec3 cuCcen = glm::normalize(cross(currentPosRay, previousPosRay));
+        glm::vec3 crossProd = glm::normalize(cross(Pstart, Pend));
         //angle of rotation
-        float cDp = glm::acos(dot(currentPosRay, previousPosRay));
+        float sDe = dot(Pstart, Pend);//glm::acos(dot(Pstart, Pend));
+        std::cout <<"Cross Prod: " << to_string(crossProd) << "Dot Prod: " << sDe << std::endl;
+        //glm::vec3 theta = (1/tan(crossProd/sDe));
         
-        glm::mat4 modelMatrix = glm::rotate(modelMatrix, cDp, cuCcen);
-        //teapot.position = modelMatrix * teapot.position;
+        if(!isnan(crossProd.x))
+        {
+        //move to origin
+        teapot.position = teapot.position - mainCamera.eyePosition;
+        // transform
+        glm::mat4 m = glm::rotate(sDe, crossProd);
+        //modelViewMatrix = modelViewMatrix * m;
+        glm::vec4 tmp = m * glm::vec4(teapot.position, 1.0);
+        teapot.position = glm::vec3 (tmp.x, tmp.y, tmp.z);
+        // Move everything back
+        teapot.position = teapot.position + mainCamera.eyePosition;
+        }
+        //modelViewMatrix = glm::rotate(modelViewMatrix, sDe, crossProd);
+        //glm::rotate(teapot.position, sDe, crossProd);
         
-        float x = cuCcen.x * sin(cDp / 2);
-        float y = cuCcen.y * sin(cDp / 2);
-        float z = cuCcen.z * sin(cDp / 2);
-        float w = cos(cDp / 2);
-        glm::quat myQuaternion2 = glm::quat(w, x, y, z);
-    //perspective and look at or unproject for z value
-        glm::vec3 EulerAngles(x, y, z);
-        glm::quat myQuaternion = glm::quat(EulerAngles);
+        //glm::mat3 m = glm::rotate(sDe, crossProd);
+        //teapot.position = m * teapot.position;
         
-        //winx = (((mousepos.x * 2 ) - windowsize.w )/ window.w ) * (2.0 * nearHalfWidth)
-        //float winy = -(((mousepos.y * 2 ) - windowsize.w )/ window.w) * (2.0 * nearHalfWidth)
-        //wincoords <mouse x, y 0,>
-        //vec4 invert vp
-        //vec3 unproject wind coord mvm, projct m, vp
-        
-        //haflwidthnear = maincamera.halfwidth(a)//a is aspect ratdio
-        //mat4 RotationMatrix = quaternion::toMat4(quaternion);
-        glm::mat4 rotationMatrix = toMat4(myQuaternion2);
-       //modelViewMatrix = glm::rotate(modelViewMatrix, cDp, cuCcen);
-       //glm::rotate(teapot.position, cDp, cuCcen);
-        
-       // teapot.position = myQuaternion2 * teapot.position;// * ScaleMatrix;
-        
-        //teapot.draw( );
-        //glm::mat4 ModelMatrix = TranslationMatrix * RotationMatrix * ScaleMatrix;
-        //myQuaternion = glm::gtx::quaternion::angleAxis(degrees(RotationAngle), RotationAxis);
-        //glm::quat myQuaternion = gtx::quaternion::angleAxis(cDp, cuCcen);
-        //glm::mat4 rotationMatrix = gtx::quaternion::toMat4(myQuaternion);
         std::cerr << "Current Teapot position: " << glm::to_string(teapot.position) << std::endl;
 
       std::cerr << "Current mouse position: " << std::get<0>(mousePosition) << ", " << std::get<1>(mousePosition) << std::endl;
