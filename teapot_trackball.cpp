@@ -253,6 +253,7 @@ public:
         std::cout <<"Cross Prod: " << to_string(crossProd) << "Dot Prod: " << sDe << std::endl;
         float magnitude = sqrt(crossProd.x * crossProd.x + crossProd.y * crossProd.y + crossProd.z * crossProd.z);
         float angle = (1.0f/(tan(magnitude/sDe)));
+        std::cout << "angle: " << angle << std::endl;
         
         //check when mouse hasn't moved
         if(!isnan(crossProd.x) && !isnan(crossProd.y) && !isnan(crossProd.z))
