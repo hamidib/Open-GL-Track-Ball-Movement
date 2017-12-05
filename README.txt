@@ -7,6 +7,5 @@ For this assignment we were given the current mouse position and the previous mo
 
 These new camera space coordinates where then passed to the shoemake function which calculated if the point selected on the near plane (p) landed on the sphere (P), and also new values for the selected point to relate to the surface of the sphere.  
 
-With these two points the I then calculated the cross product and the dot product to get an axis of rotation and the angle of rotation.  With these values I could then create the rotation matrix to multiply by the modelViewMatrix.  
+With these two points the I then calculated the cross product and the dot product to get an axis of rotation and the angle of rotation.  With these values I could then created the angleAxis which was then fed into a quaternion.  The rotation matrix was then extracted from the quaternion and used to multiply against the modelViewMatrix.  
 
-I had some issues with getting formula 32(line255,255) on page 211 of the handout to create the rotation matrix as the teapot does not spin.
