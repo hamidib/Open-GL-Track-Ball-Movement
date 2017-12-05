@@ -47,7 +47,8 @@ private:
   glm::mat4 modelViewMatrix;
   glm::mat4 projectionMatrix;
   glm::mat4 normalMatrix;
-  
+    glm::mat4 totalRotationMatrix = glm::mat4(1.0);
+    
   GLSLProgram shaderProgram;
 
   SpinningLight light0;
@@ -67,6 +68,7 @@ private:
   unsigned int uDiffuse;
   unsigned int uSpecular;
   unsigned int uShininess;
+  
   
 public:
   TeapotTrackballApp(int argc, char* argv[]) :
@@ -252,23 +254,45 @@ public:
         float sDe = dot(Pstart, Pend);//glm::acos(dot(Pstart, Pend));
         std::cout <<"Cross Prod: " << to_string(crossProd) << "Dot Prod: " << sDe << std::endl;
         float magnitude = sqrt(crossProd.x * crossProd.x + crossProd.y * crossProd.y + crossProd.z * crossProd.z);
-        float angle = (1.0f/(tan(magnitude/sDe)));
+        float angle = (1.0f/(tan(magnitude/sDe)));//eq 31
         std::cout << "angle: " << angle << std::endl;
         
+        //atan or acos
+        float myAcos = glm::acos(dot(Pstart, Pend));//alternative to angle - degenerate case at 90 degrees
+        
+        assert(crossProd != glm::vec3(0,0,0));//degenerate case
+        assert(myAcos != glm::acos(90));
+        
+        glm::quat myQuaternion = glm::quat(glm::angleAxis(myAcos, crossProd));
+        glm::mat4 RotationMatrix = glm::toMat4(myQuaternion);
+        totalRotationMatrix = totalRotationMatrix * RotationMatrix;
+        modelViewMatrix =  modelViewMatrix * totalRotationMatrix;
         //check when mouse hasn't moved
-        if(!isnan(crossProd.x) && !isnan(crossProd.y) && !isnan(crossProd.z))
-        {
+        //if(!isnan(crossProd.x) && !isnan(crossProd.y) && !isnan(crossProd.z))
+        //{
         //move to origin
         //teapot.position = teapot.position - mainCamera.eyePosition;
         // transform
-        modelViewMatrix = glm::rotate(modelViewMatrix, angle, crossProd);
-        //glm::mat4 m = glm::rotate(2.0f, crossProd);
-        //modelViewMatrix = modelViewMatrix * m;
+        
+        //modelViewMatrix = glm::rotate(modelViewMatrix, myAcos, crossProd);
+        
+        //glm::mat4 m = glm::rotate(angle, crossProd);
+        //modelViewMatrix =  m * lookAtMatrix;
         //glm::vec4 tmp = m * glm::vec4(teapot.position, 1.0);
         //teapot.position = glm::vec3 (tmp.x, tmp.y, tmp.z);
         // Move everything back
         //teapot.position = teapot.position + mainCamera.eyePosition;
-        }
+            ///
+        /*
+            float x = crossProd.x * sin(sDe / 2);
+            float y = crossProd.y * sin(sDe / 2);
+            float z = crossProd.z * sin(sDe / 2);
+            float w = cos(sDe / 2);
+            glm::quat myQuaternion = glm::quat(w, x, y, z);
+            glm::mat4 rotationMatrix = toMat4(myQuaternion);
+            modelViewMatrix =  rotationMatrix * modelViewMatrix;
+        */
+        //}
         //modelViewMatrix = glm::rotate(modelViewMatrix, sDe, crossProd);
         //glm::rotate(teapot.position, sDe, crossProd);
         
